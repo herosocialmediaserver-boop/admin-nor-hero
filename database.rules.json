@@ -1,0 +1,53 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "doctors": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+    "sessions": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".indexOn": [
+        "doctorId"
+      ],
+      "$sid": {
+        ".read": true
+      }
+    },
+    "attendance": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "$sid": {
+        "$studentId": {
+          ".write": "(auth != null && root.child('admins').child(auth.uid).val() === true) || (!data.exists() && root.child('sessions').child($sid).child('open').val() === true && root.child('sessions').child($sid).child('expiresAt').val() > now)",
+          ".validate": "$studentId.matches(/^[A-Za-z0-9]{3,20}$/) && newData.hasChildren(['name','studentId','device','deviceKey','fp','ts']) && newData.child('studentId').val() === $studentId && newData.child('name').isString() && newData.child('name').val().length >= 3 && newData.child('name').val().length <= 80 && newData.child('device').isString() && newData.child('device').val().length <= 100 && newData.child('deviceKey').isString() && newData.child('deviceKey').val().length <= 64 && newData.child('ts').val() === now",
+          "name": {},
+          "studentId": {},
+          "device": {},
+          "deviceKey": {},
+          "fp": {},
+          "ts": {},
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "deviceLocks": {
+      "$sid": {
+        "$dev": {
+          ".read": true,
+          ".write": "(auth != null && root.child('admins').child(auth.uid).val() === true) || (!data.exists() && root.child('sessions').child($sid).child('open').val() === true && root.child('sessions').child($sid).child('expiresAt').val() > now)",
+          ".validate": "$dev.matches(/^[a-f0-9]{8,64}$/)"
+        }
+      }
+    }
+  }
+}
